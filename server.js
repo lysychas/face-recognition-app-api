@@ -1,8 +1,10 @@
 const express = require("express");
-
 const app = express();
+const bcrypt = require("bcrypt-nodejs");
+const cors = require("cors");
 
 app.use(express.json());
+app.use(cors());
 
 const database = {
   users: [
@@ -23,9 +25,41 @@ const database = {
       joined: new Date(),
     },
   ],
+  login: [
+    {
+      id: "987",
+      hash: "",
+      email: "luke.gmail.com",
+    },
+  ],
 };
 
-const findUserById = () => {};
+const findUserById = (req, res) => {
+  let found = false;
+  database.users.forEach((user) => {
+    if (user.id === req) {
+      found = true;
+      return res.json(user);
+    }
+  });
+  if (!found) {
+    res.status(404).json("Not Found");
+  }
+};
+
+const addEntryToUser = (req, res) => {
+  let found = false;
+  database.users.forEach((user) => {
+    if (user.id === req) {
+      found = true;
+      user.entries++;
+      return res.json(user.entries);
+    }
+  });
+  if (!found) {
+    res.status(404).json("Not Found");
+  }
+};
 
 app.get("/", (req, res) => {
   res.send(database.users);
@@ -36,7 +70,7 @@ app.post("/signin", (req, res) => {
     req.body.email === database.users[0].email &&
     req.body.password === database.users[0].password
   ) {
-    res.json("Success!");
+    res.json(database.users[0]);
   } else {
     res.status(400).json("Error logging in...");
   }
@@ -48,7 +82,6 @@ app.post("/register", (req, res) => {
     id: "125",
     name: name,
     email: email,
-    password: password,
     entries: 0,
     joined: new Date(),
   });
@@ -57,32 +90,11 @@ app.post("/register", (req, res) => {
 });
 
 app.get("/profile/:id", (req, res) => {
-  const { id } = req.params;
-  let found = false;
-  database.users.forEach((user) => {
-    if (user.id === id) {
-      found = true;
-      return res.json(user);
-    }
-  });
-  if (!found) {
-    res.status(404).json("Not Found");
-  }
+  findUserById(req.params.id, res);
 }); //:id = params
 
 app.put("/image", (req, res) => {
-  const { id } = req.body;
-  let found = false;
-  database.users.forEach((user) => {
-    if (user.id === id) {
-      found = true;
-      user.entries++;
-      return res.json(user.entries);
-    }
-  });
-  if (!found) {
-    res.status(404).json("Not Found");
-  }
+  addEntryToUser(req.body.id, res);
 });
 
 app.listen(3000, () => {
@@ -95,6 +107,4 @@ app.listen(3000, () => {
 /register --> POST = user
 /profile/:userId --> GET = user
 /image --> PUT --> user
-
-
 */
